@@ -2,7 +2,7 @@ import tradeoff.results.result_manager as result_manager
 import os
 
 result_data_folder = "result_data"
-job_set = "js1"
+job_set = "js2"
 
 model_config_folder = "model_config"
 job_set_folder = "job_sets"

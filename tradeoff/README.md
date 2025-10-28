@@ -1,5 +1,9 @@
 # TradeOffSimulation
 
+# How to run
+
+poetry run python -m tradeoff.<sub package>.<py file>
+
 # Architecture
 
 -Start script
