@@ -1,73 +1,56 @@
-# TradeOffSimulation
+# Tradeoff Research: Online Scheduling in Serverless Systems
 
-# How to run
+Research code for studying the tradeoff between infrastructure cost and job response time in serverless computing systems. The project implements scheduling policies and a discrete-event simulator for comparing how those policies perform under different workloads and parameter settings.
 
-poetry run python -m tradeoff.<sub package>.<py file>
+**Associated publication:** Grady Thompson, Mohammad Shahrad, and Sathish Gopalakrishnan, *Job Scheduling in Serverless Systems: Cost and Response Time Tradeoffs*, ICDCN 2026. [Paper (DOI)](https://doi.org/10.1145/3772290.3772308).
 
-# Architecture
+## Research question
 
--Start script
-  -Initializes everything
-  -Parameterized from commandline
-  -Configuration via files
+Activating more containers can reduce the time jobs spend waiting, but increases infrastructure cost. Using fewer containers saves resources, but may increase response times. The associated paper develops and analyzes online scheduling algorithms for managing this tradeoff and establishes theoretical performance guarantees.
 
--Overall controller
-  -Contains all components
-  -State based (each component should have a next event time available)
-  -When event occurs, sends to other components
+This repository provides a simulation environment for exploring the behavior of different scheduling policies. It models job releases, execution durations, container startup delays, job assignments, container activation and termination, and the resulting cost and delays. Theoretical proofs are contained in the paper rather than in this repository.
 
--Simulated system
-  -Has a number of machines on
-  -Each machine has a queue of tasks to run
-  -Event - machine runs out of work/idle time
+## Implementation
 
--Simulated input
-  -Generates jobs
-  -Event - job is released
+The main components are:
 
--Model
-  -Determines how jobs are scheduled onto machines
-  -Determines which containers are kept alive at any time
-  -Event - command to system is made
+| Location | Purpose |
+| --- | --- |
+| [`tradeoff/schedulers/`](tradeoff/schedulers/) | Implementations of FIFO, KJD1, KJD2, UJD1, and UJD2 scheduling policies |
+| [`tradeoff/system/controller.py`](tradeoff/system/controller.py) | Coordinates the discrete-event simulation |
+| [`tradeoff/system/simulated_system.py`](tradeoff/system/simulated_system.py) | Simulates container execution and associated costs |
+| [`tradeoff/results/`](tradeoff/results/) | Tools for recording and analyzing simulation results |
+| [`model_config/`](model_config/) | Scheduler configurations and parameter settings |
+| [`job_sets/`](job_sets/) | Input workloads |
+| [`result_data/`](result_data/) | Stored outputs from simulation experiments |
+| [`tests/`](tests/) | Existing test inputs, expected outputs, and test scripts |
 
-# Models
-## RL
-### Parameters
+The repository also includes an exploratory reinforcement-learning scheduling component. This is separate from the online scheduling algorithms studied in the associated publication.
 
-Parameters inputted into the RL model, which are generated from the system.
+## Running a simulation
 
-#### Legend
+The project uses Python 3.11+ and Poetry. From the directory containing `pyproject.toml`, install dependencies:
 
-- U - upper bound
-- L - lower bound
-- UL - both upper and lower bound
+```bash
+poetry install
+```
 
-#### List
+On **Windows**, an example invocation is:
 
-- Number of containers
-- Number of queued jobs
-- UL next container completion time
-- UL average container volume
-- UL last container completion time
-- earliest queued job receival time
-- average queued job receival time
-- latest queued job receival time
-- UL queued job volume
-- UL minimum queued job duration
-- UL maximum queued job duration
-- UL earliest queued job duration
-- new container startup time
+```bash
+poetry run python -m tradeoff.run FIFO_c10 js2 1
+```
 
-### Output
+This selects the FIFO configuration (`model_config/FIFO_c10.txt`), job set (`job_sets/js2.txt`), and startup duration (`1`). The output is written to `result_data/FIFO_c10_js2.txt`.
 
-The number of containers to be kept activated. 
-If the number of container exceeds the current amount, new containers are activated,
-if the number of containers is less than the current amount, 
-containers are shutdown when they complete their current job, until the target number is reached.
+**Portability note:** The current entry point, `tradeoff/run.py`, constructs paths using Windows-style backslashes. Running this command on macOS or Linux may require adapting those paths. The command above has not been independently verified in every environment.
 
-### Reward
+## Evaluating results
 
-The reward follows the following function (R is a hyperparameter):
+For each workload and policy configuration, the simulator records total container cost and job-level queue delays. Container cost represents cumulative active-container time; queue delay is calculated from a job's completion time, release time, and execution duration.
 
-Reward = -#containers-R(Maximum delay of currently assigned jobs
-)
+These outputs make it possible to compare policies under consistent workload assumptions and investigate how policy parameters affect cost and responsiveness. The repository contains example results and plotting utilities. Simulation results complement, but do not establish, the theoretical guarantees proved in the paper.
+
+## Scope
+
+This is academic research software, not a production scheduling system. The code was written to support exploration and experimental evaluation of scheduling policies. For formal model assumptions, theoretical guarantees, and proofs, see the associated publication.
